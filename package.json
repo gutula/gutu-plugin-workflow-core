@@ -6,12 +6,12 @@
     "framework/builtin-plugins/*"
   ],
   "scripts": {
-    "build": "bun --cwd framework/builtin-plugins/workflow-core run build",
-    "typecheck": "bun --cwd framework/builtin-plugins/workflow-core run typecheck",
-    "lint": "bun --cwd framework/builtin-plugins/workflow-core run lint",
-    "test": "bun --cwd framework/builtin-plugins/workflow-core run test",
-    "test:contracts": "bun --cwd framework/builtin-plugins/workflow-core run test:contracts",
-    "test:unit": "bun --cwd framework/builtin-plugins/workflow-core run test:unit",
+    "build": "bun run --cwd framework/builtin-plugins/workflow-core build",
+    "typecheck": "bun run --cwd framework/builtin-plugins/workflow-core typecheck",
+    "lint": "bun run --cwd framework/builtin-plugins/workflow-core lint",
+    "test": "bun run --cwd framework/builtin-plugins/workflow-core test",
+    "test:contracts": "bun run --cwd framework/builtin-plugins/workflow-core test:contracts",
+    "test:unit": "bun run --cwd framework/builtin-plugins/workflow-core test:unit",
     "docs:summary": "node scripts/docs-summary.mjs",
     "docs:check": "node scripts/docs-check.mjs"
   }

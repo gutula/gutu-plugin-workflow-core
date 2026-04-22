@@ -4,7 +4,29 @@ import { transitionWorkflowInstance } from "../services/main.service";
 import { workflowDefinitionKeys } from "../workflows/catalog";
 
 const workflowDefinitionKeySchema = z.enum(workflowDefinitionKeys);
-const workflowTransitionSchema = z.enum(["submit", "approve", "reject", "reopen", "publish", "archive", "revoke"]);
+const workflowTransitionSchema = z.enum([
+  "submit",
+  "approve",
+  "reject",
+  "reopen",
+  "publish",
+  "archive",
+  "revoke",
+  "classify",
+  "plan",
+  "execute",
+  "request_approval",
+  "resume",
+  "verify",
+  "complete",
+  "retry",
+  "escalate",
+  "cancel",
+  "expire",
+  "queue",
+  "start",
+  "fail"
+]);
 const workflowStateSchema = z.enum([
   "draft",
   "pending_approval",
@@ -16,7 +38,21 @@ const workflowStateSchema = z.enum([
   "security_review",
   "granted",
   "revoked",
-  "archived"
+  "archived",
+  "intake",
+  "classified",
+  "planned",
+  "executing",
+  "approval_pending",
+  "verifying",
+  "completed",
+  "recovery",
+  "escalated",
+  "cancelled",
+  "failed",
+  "queued",
+  "in_progress",
+  "expired"
 ]);
 
 export const transitionWorkflowInstanceAction = defineAction({
@@ -52,7 +88,7 @@ export const transitionWorkflowInstanceAction = defineAction({
     definitionKey: workflowDefinitionKeySchema,
     currentState: workflowStateSchema,
     transition: workflowTransitionSchema,
-    actorRole: z.enum(["requester", "approver", "admin"]),
+    actorRole: z.enum(["requester", "approver", "admin", "system", "ai-operator", "department-lead"]),
     reason: z.string().min(3).optional()
   }),
   output: z.object({
@@ -60,7 +96,19 @@ export const transitionWorkflowInstanceAction = defineAction({
     nextState: workflowStateSchema,
     approvalStatus: z.enum(["not-required", "pending", "approved", "rejected"]),
     auditEventType: z.string(),
-    sideEffects: z.array(z.enum(["notify-approver", "notify-requester", "enqueue-followup", "publish-artifact", "revoke-access"]))
+    sideEffects: z.array(
+      z.enum([
+        "notify-approver",
+        "notify-requester",
+        "enqueue-followup",
+        "publish-artifact",
+        "revoke-access",
+        "queue-reminder",
+        "queue-escalation",
+        "queue-recovery",
+        "queue-verification"
+      ])
+    )
   }),
   permission: "workflow.instances.transition",
   idempotent: true,

@@ -21,7 +21,7 @@ export const WorkflowInstanceResource = defineResource({
     id: z.string().uuid(),
     tenantId: z.string().uuid(),
     definitionKey: z.enum(workflowDefinitionKeys),
-    subjectType: z.enum(["invoice", "content", "access-request"]),
+    subjectType: z.enum(["invoice", "content", "access-request", "ai-run", "company-work-intake"]),
     subjectId: z.string().min(3),
     currentState: z.string().min(3),
     approvalStatus: z.enum(["not-required", "pending", "approved", "rejected"]),

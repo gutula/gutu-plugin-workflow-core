@@ -18,9 +18,44 @@ export type DomainActionInput = {
     | "security_review"
     | "granted"
     | "revoked"
-    | "archived";
-  transition: "submit" | "approve" | "reject" | "reopen" | "publish" | "archive" | "revoke";
-  actorRole: "requester" | "approver" | "admin";
+    | "archived"
+    | "intake"
+    | "classified"
+    | "planned"
+    | "executing"
+    | "approval_pending"
+    | "verifying"
+    | "completed"
+    | "recovery"
+    | "escalated"
+    | "cancelled"
+    | "failed"
+    | "queued"
+    | "in_progress"
+    | "expired";
+  transition:
+    | "submit"
+    | "approve"
+    | "reject"
+    | "reopen"
+    | "publish"
+    | "archive"
+    | "revoke"
+    | "classify"
+    | "plan"
+    | "execute"
+    | "request_approval"
+    | "resume"
+    | "verify"
+    | "complete"
+    | "retry"
+    | "escalate"
+    | "cancel"
+    | "expire"
+    | "queue"
+    | "start"
+    | "fail";
+  actorRole: "requester" | "approver" | "admin" | "system" | "ai-operator" | "department-lead";
   reason?: string | undefined;
 };
 
@@ -37,16 +72,40 @@ type WorkflowTransitionResult = {
     | "security_review"
     | "granted"
     | "revoked"
-    | "archived";
+    | "archived"
+    | "intake"
+    | "classified"
+    | "planned"
+    | "executing"
+    | "approval_pending"
+    | "verifying"
+    | "completed"
+    | "recovery"
+    | "escalated"
+    | "cancelled"
+    | "failed"
+    | "queued"
+    | "in_progress"
+    | "expired";
   approvalStatus: "not-required" | "pending" | "approved" | "rejected";
   auditEventType: string;
-  sideEffects: Array<"notify-approver" | "notify-requester" | "enqueue-followup" | "publish-artifact" | "revoke-access">;
+  sideEffects: Array<
+    | "notify-approver"
+    | "notify-requester"
+    | "enqueue-followup"
+    | "publish-artifact"
+    | "revoke-access"
+    | "queue-reminder"
+    | "queue-escalation"
+    | "queue-recovery"
+    | "queue-verification"
+  >;
 };
 
 export function transitionWorkflowInstance(input: DomainActionInput): WorkflowTransitionResult {
   normalizeActionInput(input);
 
-  if (input.actorRole === "requester" && ["approve", "reject", "revoke"].includes(input.transition)) {
+  if (input.actorRole === "requester" && ["approve", "reject", "revoke", "escalate"].includes(input.transition)) {
     throw new Error(`role ${input.actorRole} cannot execute transition ${input.transition}`);
   }
 
@@ -60,11 +119,14 @@ export function transitionWorkflowInstance(input: DomainActionInput): WorkflowTr
   const nextState = resolvedNextState as WorkflowTransitionResult["nextState"];
 
   const approvalStatus =
-    nextState === "pending_approval" || nextState === "editor_review" || nextState === "security_review"
+    nextState === "pending_approval" ||
+    nextState === "approval_pending" ||
+    nextState === "editor_review" ||
+    nextState === "security_review"
       ? "pending"
-      : nextState === "approved" || nextState === "published" || nextState === "granted"
+      : nextState === "approved" || nextState === "published" || nextState === "granted" || nextState === "completed"
         ? "approved"
-        : nextState === "rejected"
+        : nextState === "rejected" || nextState === "expired"
           ? "rejected"
           : "not-required";
 
@@ -74,6 +136,18 @@ export function transitionWorkflowInstance(input: DomainActionInput): WorkflowTr
   }
   if (approvalStatus === "approved") {
     sideEffects.push("notify-requester", "enqueue-followup");
+  }
+  if (nextState === "approval_pending") {
+    sideEffects.push("queue-reminder");
+  }
+  if (nextState === "verifying") {
+    sideEffects.push("queue-verification");
+  }
+  if (nextState === "recovery") {
+    sideEffects.push("queue-recovery");
+  }
+  if (nextState === "expired" || nextState === "escalated") {
+    sideEffects.push("queue-escalation");
   }
   if (nextState === "published") {
     sideEffects.push("publish-artifact");

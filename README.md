@@ -27,7 +27,7 @@ Defines explicit workflow state machines and approval models so business process
 
 - Exports 1 governed action: `workflow.instances.transition`.
 - Owns 1 resource contract: `workflow.instances`.
-- Publishes 3 workflow definitions with state-machine descriptions and mandatory steps.
+- Publishes 6 workflow definitions with state-machine descriptions, approval side effects, and recovery paths.
 - Registers a bounded UI surface that can be hosted by the surrounding admin or portal shell.
 - Defines a durable data schema contract even though no explicit SQL helper module is exported.
 
@@ -66,7 +66,7 @@ This tier is justified because unit coverage exists, contract coverage exists, a
 | Actions | 1 | `workflow.instances.transition` |
 | Resources | 1 | `workflow.instances` |
 | Jobs | 0 | No job catalog exported |
-| Workflows | 3 | `access-review`, `content-publication`, `invoice-approval` |
+| Workflows | 6 | `access-review`, `content-publication`, `invoice-approval`, `ai-run-lifecycle`, `ai-run-approval`, `company-work-intake` |
 | UI | Present | base UI surface |
 
 ## Quick Start For Integrators
@@ -107,12 +107,10 @@ Use the root repo scripts for day-to-day work **after the workspace is bootstrap
 
 ## Recommended Next Milestones
 
+- Add targeted integration coverage for AI approvals, escalations, and company-work recovery paths.
+- Add explicit migration or rollback coverage if workflow instance state becomes more operationally sensitive.
 - Add richer execution-state and replay guidance if more plugins adopt workflow-driven orchestration.
-- Expose tighter integration patterns with jobs and notifications when human approvals start driving more automation.
 - Add stronger operator-facing reconciliation and observability surfaces where runtime state matters.
-- Promote any currently implicit cross-plugin lifecycles into explicit command, event, or job contracts when those integrations stabilize.
-- Add targeted integration coverage once the current lifecycle path is stable enough to benefit from end-to-end assertions.
-- Add explicit migration or rollback coverage if this domain becomes more operationally sensitive.
 - Broaden the admin entry surface only if operators need more than the current embedded view or resource listing.
 
 ## More Docs

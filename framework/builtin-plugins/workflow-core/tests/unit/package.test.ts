@@ -12,7 +12,14 @@ describe("plugin manifest", () => {
   });
 
   it("publishes explicit workflow definitions", () => {
-    expect(workflowDefinitionKeys).toEqual(["access-review", "content-publication", "invoice-approval"]);
+    expect(workflowDefinitionKeys).toEqual([
+      "access-review",
+      "content-publication",
+      "invoice-approval",
+      "ai-run-lifecycle",
+      "ai-run-approval",
+      "company-work-intake"
+    ]);
   });
 
   it("transitions approval workflows with audited side effects", () => {
@@ -52,5 +59,45 @@ describe("plugin manifest", () => {
     }
 
     expect(errorMessage).toContain("cannot execute transition");
+  });
+
+  it("supports governed AI approval workflows with reminder side effects", () => {
+    expect(
+      transitionWorkflowInstance({
+        instanceId: "7c9fb1b9-c9ff-4f4d-b255-9baf6850f7c2",
+        tenantId: "7a85aa4d-96e0-4b9a-b4db-6d11ebce2786",
+        definitionKey: "ai-run-approval",
+        currentState: "intake",
+        transition: "request_approval",
+        actorRole: "system",
+        reason: "approval packet assembled"
+      })
+    ).toEqual({
+      ok: true,
+      nextState: "approval_pending",
+      approvalStatus: "pending",
+      auditEventType: "workflow.instance.request_approval",
+      sideEffects: ["notify-approver", "queue-reminder"]
+    });
+  });
+
+  it("routes company work rejections into recovery side effects", () => {
+    expect(
+      transitionWorkflowInstance({
+        instanceId: "company-workflow:recovery-test",
+        tenantId: "7a85aa4d-96e0-4b9a-b4db-6d11ebce2786",
+        definitionKey: "company-work-intake",
+        currentState: "in_progress",
+        transition: "reject",
+        actorRole: "ai-operator",
+        reason: "knowledge freshness degraded"
+      })
+    ).toEqual({
+      ok: true,
+      nextState: "recovery",
+      approvalStatus: "not-required",
+      auditEventType: "workflow.instance.reject",
+      sideEffects: ["queue-recovery"]
+    });
   });
 });
