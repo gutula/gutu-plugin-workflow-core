@@ -5,6 +5,12 @@ export default definePackage({
   kind: "app",
   version: "0.1.0",
   displayName: "Workflow Core",
+  defaultCategory: {
+    id: "platform_governance",
+    label: "Platform Governance",
+    subcategoryId: "workflow_approvals",
+    subcategoryLabel: "Workflow & Approvals"
+  },
   description: "Explicit workflows and approval state machines.",
   extends: [],
   dependsOn: ["auth-core","org-tenant-core","role-policy-core","audit-core"],

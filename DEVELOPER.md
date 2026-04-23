@@ -38,6 +38,8 @@ Defines explicit workflow state machines and approval models so business process
 | Package Name | `@plugins/workflow-core` |
 | Manifest ID | `workflow-core` |
 | Display Name | Workflow Core |
+| Domain Group | Platform Backbone |
+| Default Category | Platform Governance / Workflow & Approvals |
 | Version | `0.1.0` |
 | Kind | `app` |
 | Trust Tier | `first-party` |
@@ -78,9 +80,9 @@ Defines explicit workflow state machines and approval models so business process
 | `access-review` | `requester`, `security-reviewer`, `admin` | `draft`, `security_review`, `granted`, `rejected`, `revoked` | Protect privileged access changes with explicit security approval and revocation paths. |
 | `content-publication` | `author`, `editor`, `publisher` | `draft`, `editor_review`, `scheduled`, `published`, `rejected`, `archived` | Prevent content from reaching publication without editorial review and scheduled release control. |
 | `invoice-approval` | `requester`, `approver`, `finance-admin` | `draft`, `pending_approval`, `approved`, `rejected`, `archived` | Ensure invoices are reviewed before final approval and archival. |
-| `ai-run-lifecycle` | `system`, `ai-operator`, `approver` | `intake`, `classified`, `planned`, `executing`, `approval_pending`, `verifying`, `completed`, `escalated`, `cancelled`, `failed` | Keep governed AI work durable, approval-aware, and operator-visible from intake through verification. |
-| `ai-run-approval` | `system`, `approver`, `ai-operator` | `queued`, `approval_pending`, `completed`, `expired`, `rejected` | Manage AI approval waits, reminders, escalations, and terminal approval decisions. |
-| `company-work-intake` | `system`, `department-lead`, `ai-operator` | `queued`, `intake`, `classified`, `in_progress`, `approval_pending`, `verifying`, `completed`, `recovery`, `escalated`, `cancelled`, `failed` | Coordinate company-pack intake, department routing, recovery, and completion state. |
+| `ai-run-lifecycle` | `system`, `ai-operator`, `approver` | `intake`, `classified`, `planned`, `executing`, `on`, `request_approval`, `verify`, `fail`, `cancel`, `approval_pending`, `verifying`, `recovery`, `completed`, `escalated`, `cancelled`, `failed` | Keep AI work typed, resumable, auditable, and safely recoverable across approval and verification steps. |
+| `ai-run-approval` | `system`, `approver`, `ai-operator` | `intake`, `approval_pending`, `approved`, `rejected`, `expired`, `escalated` | Track approval wait, approval decisions, and escalation for sensitive AI mutations. |
+| `company-work-intake` | `requester`, `department-lead`, `ai-operator`, `approver` | `intake`, `classified`, `queued`, `in_progress`, `approval_pending`, `verifying`, `recovery`, `completed`, `escalated`, `cancelled` | Route incoming company work through classification, execution, recovery, and department ownership. |
 
 
 ### UI Surface Summary
@@ -98,7 +100,7 @@ This plugin should be integrated through **explicit commands/actions, resources,
 - No standalone plugin-owned lifecycle event feed is exported today.
 - No plugin-owned job catalog is exported today.
 - Workflow surface: `access-review`, `content-publication`, `invoice-approval`, `ai-run-lifecycle`, `ai-run-approval`, `company-work-intake`.
-- Recommended composition pattern: invoke actions, read resources, then pair workflow transitions with jobs, notifications, approvals, and recovery logic in the surrounding runtime.
+- Recommended composition pattern: invoke actions, read resources, then let the surrounding Gutu command/event/job runtime handle downstream automation.
 
 ## Storage, Schema, And Migration Notes
 
@@ -112,7 +114,7 @@ The plugin does not export a dedicated SQL helper module today. Treat the schema
 ## Failure Modes And Recovery
 
 - Action inputs can fail schema validation or permission evaluation before any durable mutation happens.
-- AI and company workflows rely on downstream jobs or notifications; hosts must preserve those side effects instead of treating transitions as local-only state changes.
+- If downstream automation is needed, the host must add it explicitly instead of assuming this plugin emits jobs.
 - There is no separate lifecycle-event feed to rely on today; do not build one implicitly from internal details.
 - Schema-affecting changes need extra care because there is no dedicated migration lane yet.
 
@@ -210,7 +212,7 @@ console.log("action", transitionWorkflowInstanceAction.id);
 
 - Exports 1 governed action: `workflow.instances.transition`.
 - Owns 1 resource contract: `workflow.instances`.
-- Publishes 6 workflow definitions with state-machine descriptions, approval side effects, and recovery paths.
+- Publishes 6 workflow definitions with state-machine descriptions and mandatory steps.
 - Registers a bounded UI surface that can be hosted by the surrounding admin or portal shell.
 - Defines a durable data schema contract even though no explicit SQL helper module is exported.
 
@@ -219,13 +221,16 @@ console.log("action", transitionWorkflowInstanceAction.id);
 - No dedicated integration test lane is exported in this repo today; validation currently leans on build, lint, typecheck, and test lanes.
 - The plugin owns durable data state, but it does not yet ship a dedicated migration verification lane in this repo.
 - The plugin exposes a UI surface, but not a richer admin workspace contribution module.
+- The repo does not yet export a domain parity catalog with owned entities, reports, settings surfaces, and exception queues.
 
 ### Recommended next
 
-- Add targeted integration coverage for AI approvals, escalations, and company-work recovery paths.
-- Add explicit migration or rollback coverage if workflow instance state becomes more operationally sensitive.
 - Add richer execution-state and replay guidance if more plugins adopt workflow-driven orchestration.
+- Expose tighter integration patterns with jobs and notifications when human approvals start driving more automation.
 - Add stronger operator-facing reconciliation and observability surfaces where runtime state matters.
+- Promote any currently implicit cross-plugin lifecycles into explicit command, event, or job contracts when those integrations stabilize.
+- Add targeted integration coverage once the current lifecycle path is stable enough to benefit from end-to-end assertions.
+- Add explicit migration or rollback coverage if this domain becomes more operationally sensitive.
 - Broaden the admin entry surface only if operators need more than the current embedded view or resource listing.
 
 ### Later / optional

@@ -4,6 +4,10 @@
 
 - `workflow.instances.transition`: Apply a governed transition to a workflow instance.
 
+## Operational scenario matrix
+
+- No operational scenario catalog is exported today.
+
 ## Action-level flows
 
 ### `workflow.instances.transition`
@@ -35,4 +39,5 @@ Forbidden shortcuts:
 - Direct dependencies: `auth-core`, `org-tenant-core`, `role-policy-core`, `audit-core`
 - Requested capabilities: `ui.register.admin`, `api.rest.mount`, `data.write.workflow`
 - Integration model: Actions+Resources+Workflows+UI
+- ERPNext doctypes used as parity references: none declared
 - Recovery ownership should stay with the host orchestration layer when the plugin does not explicitly export jobs, workflows, or lifecycle events.
