@@ -45,6 +45,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/admin-primitives/Car
 import { StatusDot } from "@/admin-primitives/StatusDot";
 import { EmptyStateFramework } from "@/admin-primitives/EmptyStateFramework";
 import { ErrorRecoveryFramework } from "@/admin-primitives/ErrorRecoveryFramework";
+import { ResourcePicker, CronBuilder } from "@/admin-primitives/pickers";
 import {
   WorkflowCanvas,
   type WorkflowNode as CanvasNode,
@@ -872,13 +873,13 @@ function NodeConfigEditor({
        *  validates server-side at run time. */}
       {node.type === "record.create" && (
         <>
-          <ParamText label="Resource" value={pStr(node.params.resource)} onChange={(v) => setParam("resource", v)} placeholder="crm.contact" />
+          <ParamResource label="Resource" value={pStr(node.params.resource)} onChange={(v) => setParam("resource", v)} />
           <ParamJson label="Data (JSON)" value={node.params.data} onChange={(v) => setParam("data", v)} />
         </>
       )}
       {(node.type === "record.update" || node.type === "record.find") && (
         <>
-          <ParamText label="Resource" value={pStr(node.params.resource)} onChange={(v) => setParam("resource", v)} placeholder="crm.contact" />
+          <ParamResource label="Resource" value={pStr(node.params.resource)} onChange={(v) => setParam("resource", v)} />
           <ParamText label="Record id" value={pStr(node.params.id)} onChange={(v) => setParam("id", v)} placeholder="{{ trigger.record.id }}" />
           {node.type === "record.update" && (
             <ParamJson label="Patch (JSON)" value={node.params.patch} onChange={(v) => setParam("patch", v)} />
@@ -887,7 +888,7 @@ function NodeConfigEditor({
       )}
       {node.type === "record.delete" && (
         <>
-          <ParamText label="Resource" value={pStr(node.params.resource)} onChange={(v) => setParam("resource", v)} placeholder="crm.contact" />
+          <ParamResource label="Resource" value={pStr(node.params.resource)} onChange={(v) => setParam("resource", v)} />
           <ParamText label="Record id" value={pStr(node.params.id)} onChange={(v) => setParam("id", v)} />
         </>
       )}
@@ -1046,6 +1047,30 @@ function ParamText({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
+/** Resource-typed param. Uses the shared registry so the operator
+ *  picks from the live plugin set instead of typing a string. The
+ *  underlying value is still a string id so workflow definitions stay
+ *  serialisable. */
+function ParamResource({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <Label>{label}</Label>
+      <ResourcePicker
+        value={value || undefined}
+        onChange={(v) => onChange(v ?? "")}
       />
     </div>
   );
@@ -1677,15 +1702,6 @@ function DatabaseEventTriggerEditor({
   );
 }
 
-const CRON_PRESETS: ReadonlyArray<{ label: string; value: string; intervalMs?: number }> = [
-  { label: "Every 5 minutes", value: "*/5 * * * *" },
-  { label: "Every 15 minutes", value: "*/15 * * * *" },
-  { label: "Every 30 minutes", value: "*/30 * * * *" },
-  { label: "Every hour", value: "0 * * * *" },
-  { label: "Daily at 9am", value: "0 9 * * *" },
-  { label: "Weekly Mon 9am", value: "0 9 * * 1" },
-];
-
 function CronTriggerEditor({
   trigger,
   onChange,
@@ -1696,34 +1712,17 @@ function CronTriggerEditor({
   return (
     <>
       <div className="flex flex-col gap-1">
-        <Label>Cron expression</Label>
-        <Input
-          className="font-mono"
+        <Label>Schedule</Label>
+        <CronBuilder
           value={trigger.cron ?? ""}
-          onChange={(e) =>
-            onChange({ kind: "cron", cron: e.target.value, intervalMs: undefined })
+          onChange={(next) =>
+            onChange({ kind: "cron", cron: next, intervalMs: undefined })
           }
-          placeholder="*/5 * * * *"
         />
-        <span className="text-xs text-text-muted">
+        <span className="text-[11px] text-text-muted">
           Five fields: minute, hour, day, month, day-of-week. The engine supports
           <code className="font-mono mx-1">*/N</code> and explicit numbers.
         </span>
-      </div>
-      <div className="flex flex-col gap-1">
-        <Label>Presets</Label>
-        <div className="flex flex-wrap gap-1.5">
-          {CRON_PRESETS.map((p) => (
-            <Button
-              key={p.value}
-              variant="ghost"
-              size="xs"
-              onClick={() => onChange({ kind: "cron", cron: p.value })}
-            >
-              {p.label}
-            </Button>
-          ))}
-        </div>
       </div>
       <div className="flex flex-col gap-1">
         <Label>Or run every N minutes</Label>
@@ -1742,7 +1741,7 @@ function CronTriggerEditor({
           }}
           placeholder="(disabled)"
         />
-        <span className="text-xs text-text-muted">
+        <span className="text-[11px] text-text-muted">
           Useful for sub-minute polls; clears the cron expression when set.
         </span>
       </div>
