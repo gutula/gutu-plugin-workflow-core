@@ -61,7 +61,7 @@ import type {
   WorkflowStatus,
   WorkflowTrigger,
   WorkflowRunStatus,
-} from "./types";
+} from "../../lib/workflow/types";
 
 /* ───────────── types coming back from the REST API ────────────── */
 

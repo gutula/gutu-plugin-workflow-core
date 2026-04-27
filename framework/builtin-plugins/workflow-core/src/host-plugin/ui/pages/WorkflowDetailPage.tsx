@@ -49,7 +49,7 @@ import {
   WorkflowCanvas,
   type WorkflowNode as CanvasNode,
   type WorkflowEdge as CanvasEdge,
-  type WorkflowNodeKind,
+  type WorkflowNodeKind as WorkflowGraphNodeKind,
 } from "@/admin-primitives/WorkflowCanvas";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/primitives/Tabs";
 import { Button } from "@/primitives/Button";
@@ -79,7 +79,6 @@ import { useHash, navigateTo } from "@/views/useRoute";
 import { formatRelative } from "@/lib/format";
 import type {
   WorkflowDefinition,
-  WorkflowGraphNode,
   WorkflowStatus,
   WorkflowTrigger,
   WorkflowRunStatus,
@@ -88,7 +87,19 @@ import type {
   DatabaseEventTrigger,
   ManualTrigger,
   WebhookTrigger,
-} from "./types";
+} from "../../lib/workflow/types";
+
+/** UI-shaped node — looser than the backend discriminated union so the
+ *  editor can hold partially-edited values without forcing every action
+ *  variant to be valid mid-edit. The backend re-validates on save. */
+type WorkflowGraphNode = {
+  id: string;
+  type: WorkflowActionType;
+  kind?: WorkflowActionType;
+  params: Record<string, unknown>;
+  label?: string;
+  position?: { x: number; y: number };
+};
 
 /* ───────────── API shapes ────────────── */
 
@@ -125,7 +136,7 @@ interface RunDetailApi extends RunListRow {
 interface ActionCatalogEntry {
   type: WorkflowActionType;
   /** Visual category — matches WorkflowCanvas node kinds. */
-  kind: WorkflowNodeKind;
+  kind: WorkflowGraphNodeKind;
   label: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -506,7 +517,7 @@ export function WorkflowDetailPage() {
                 ...(patch.params !== undefined ? { params: patch.params } : {}),
               }
             : n,
-        );
+        ) as typeof prev.nodes;
         return next;
       });
       setDirty(true);
@@ -539,7 +550,7 @@ export function WorkflowDetailPage() {
       const lastId = prev.nodes.at(-1)?.id ?? "start";
       return {
         ...prev,
-        nodes: [...prev.nodes, newNode],
+        nodes: [...prev.nodes, newNode] as typeof prev.nodes,
         edges: [...prev.edges, { from: lastId, to: newId }],
       };
     });
