@@ -1614,11 +1614,10 @@ function ManualTriggerEditor({
         </Select>
       </div>
       {trigger.availability === "record-detail" && (
-        <ParamText
+        <ParamResource
           label="Resource"
           value={trigger.resource ?? ""}
           onChange={(v) => onChange({ ...trigger, resource: v })}
-          placeholder="crm.contact"
         />
       )}
       <div className="text-xs text-text-muted">
