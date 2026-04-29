@@ -29,6 +29,12 @@ export const hostPlugin: HostPlugin = {
   routes: [
     { mountPath: "/workflows", router: workflowRoutes },
   ],
+  resources: [
+    "workflow.workflow",
+    "automation.run",
+    "automation.step",
+    "automation.trigger",
+  ],
   start: (ctx) => {
     // Cache the notification dispatch capability looked up via the
     // cross-plugin registry. The engine's `notify` action steps use
